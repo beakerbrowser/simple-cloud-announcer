@@ -1,0 +1,83 @@
+# simple-cloud-announcer
+
+A fork of [discovery-swarm](https://github.com/mafintosh/discovery-swarm) that announces a peer and waits for connections. Meant to be used by cloud peers that don't want to create outbound connections.
+
+**TODOS**
+
+ - Tests
+
+## Usage
+
+``` js
+var announcer = require('simple-cloud-announcer')
+
+var sca = announcer()
+
+sca.listen(1000)
+sca.join('ubuntu-14.04') // can be any id/name/hash
+
+sca.on('connection', function (connection) {
+  console.log('found + connected to peer')
+})
+```
+
+## API
+
+#### `var sca = announcer(opts)`
+
+Create a new announcer. Options include:
+
+```js
+{
+  id: crypto.randomBytes(32), // peer-id for user
+  stream: stream, // stream to replicate across peers
+  connect: fn, // connect local and remote streams yourself
+  utp: true, // use utp for discovery
+  tcp: true // use tcp for discovery
+}
+```
+
+For full list of `opts` take a look at [discovery-channel](https://github.com/maxogden/discovery-channel)
+
+#### `sw.join(key, [opts], [cb])`
+
+Join a channel specified by `key` (usually a name, hash or id, must be a **Buffer** or a **string**). After joining will immediately search for peers advertising this key, and re-announce on a timer.
+
+If you pass `opts.announce` as a falsy value you don't announce your port (e.g. you will be in discover-only mode)
+
+If you specify cb, it will be called *when the first round* of discovery has completed. But only on the first round.
+
+#### `sw.leave(key)`
+
+Leave the channel specified `key`
+
+#### `sw.connecting`
+
+Number of peers we are trying to connect to
+
+#### `sw.connected`
+
+Number of peers connected to
+
+#### `sw.on('connection', function(connection, info) { ... })`
+
+Emitted when you connect to another peer. Info is an object that contains info about the connection
+
+``` js
+{
+  type: 'tcp', // the type, tcp or utp
+  initiator: true, // whether we initiated the connection or someone else did
+  channel: Buffer('...'), // the channel this connetion was initiated on. only set if initiator === true
+  host: '127.0.0.1', // the remote address of the peer.
+  port: 8080, // the remote port of the peer.
+  id: Buffer('...') // the remote peer's peer-id.
+}
+```
+
+#### `sw.listen(port)`
+
+Listen on a specific port. Should be called before add
+
+## License
+
+MIT
